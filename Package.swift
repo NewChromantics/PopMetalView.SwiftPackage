@@ -8,7 +8,8 @@ let package = Package(
 	
 	platforms: [
 		.iOS(.v15),
-		.macOS(.v10_15)
+		//.macOS(.v10_15)
+		.macOS(.v12)	//	for .overlay{} - revert to zstack if this is a problem
 	],
 	
 	products: [

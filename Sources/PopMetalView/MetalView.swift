@@ -130,16 +130,78 @@ func clamp(_ value:Float,_ Min:Float,_ Max:Float) -> Float
 	return v
 }
 
-public struct MetalView : UIViewRepresentable 
+
+/*
+	wrapper to MetalViewDirect with some niceities on top
+	- fps counter
+	- auto error display
+*/
+public struct MetalView : View 
 {
 	var contentRenderer : ContentRenderer
-	var metalCore = MetalContentBase()
+	@State var lastError : Error?
+	var lastFps : String {	String(format:"%0.2f",self.frameCounter.lastAverageCountPerSec)	}
+	@StateObject var frameCounter = FrameCounter()
 	
 	public init(contentRenderer: ContentRenderer)
 	{
 		self.contentRenderer = contentRenderer
 	}
-		
+	
+	public var body: some View 
+	{
+		MetalViewDirect(contentRenderer: self.contentRenderer,onRenderFinished: self.OnRenderFinished )
+			.overlay
+		{
+			VStack(alignment: .leading)
+			{
+				Text("\(lastFps) fps")
+					.padding(10)
+					.background(.black.opacity(0.70))
+					.foregroundStyle(.white.opacity(0.70))
+				
+				if let lastError
+				{
+					Text("Error \(lastError.localizedDescription)")
+						.padding(10)
+						.background(.red.opacity(0.70))
+						.foregroundStyle(.white.opacity(0.70))
+				}
+			}
+			.frame(maxWidth: .infinity,maxHeight: .infinity, alignment: .topLeading)
+		}
+	}
+	
+	func OnRenderFinished(error:Error?)
+	{
+		self.lastError = error
+		self.frameCounter.Add()
+	}
+}
+
+
+public struct MetalViewDirect : UIViewRepresentable 
+{
+	var contentRenderer : ContentRenderer
+	var metalCore = MetalContentBase()
+	internal var onRenderFinished : (Error?)->Void
+	
+	public init(contentRenderer: ContentRenderer,onRenderFinished:@escaping ((Error?)->Void)=OnRenderFinishedNoop)
+	{
+		self.contentRenderer = contentRenderer
+		self.onRenderFinished = onRenderFinished
+	}
+
+	public static func OnRenderFinishedNoop(error:Error?)
+	{
+		if let error
+		{
+			//	render error in Renderer
+			print("Renderer error; \(error.localizedDescription)")
+		}
+	}
+	
+	
 	public typealias UIViewType = MTKView
 	public typealias NSViewType = MTKView
 	
@@ -181,9 +243,9 @@ public struct MetalView : UIViewRepresentable
 	
 	public class Coordinator: NSObject, MTKViewDelegate 
 	{
-		var parent : MetalView
+		var parent : MetalViewDirect
 		
-		init(_ parent: MetalView) {
+		init(_ parent: MetalViewDirect) {
 			self.parent = parent
 		}
 		
@@ -235,11 +297,12 @@ public struct MetalView : UIViewRepresentable
 				
 				commandBuffer.present(drawable)
 				commandBuffer.commit()
+				
+				parent.onRenderFinished(nil)
 			}
 			catch
 			{
-				//	render error in Renderer
-				print("Renderer error; \(error.localizedDescription)")
+				parent.onRenderFinished(error)
 			}
 		}
 	}
@@ -379,9 +442,21 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 	}
 }
 
+class PreviewErrorRenderer : ContentRenderer
+{
+	func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws {
+		throw MetalError("Preview Error")
+	}
+	
+	
+}
+
 
 #Preview
 {
+	MetalView(contentRenderer: PreviewErrorRenderer())
+		.frame(minWidth:100,minHeight:100)
+	
 	MetalView(contentRenderer: PreviewRenderer())
 		.frame(minWidth:100,minHeight:100)
 		.frame(maxWidth: .infinity,maxHeight: .infinity)
