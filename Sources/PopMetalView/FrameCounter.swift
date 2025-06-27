@@ -22,7 +22,7 @@ public struct FrameCounterModel
 		self.onLap = OnLap
 	}
 	
-	mutating func Add(increment:Int=1)
+	mutating public func Add(increment:Int=1)
 	{
 		counter += increment
 		//	check if it's time to lap
