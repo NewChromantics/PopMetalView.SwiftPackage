@@ -2,70 +2,55 @@ import SwiftUI
 import Metal
 import MetalKit
 
-/*
- 
-	These are all a simple "scene" API, which are really abstracted away from metal...
-	Lets renamed this away from "Pop" - Content?
- 
-*/
 
-
-public struct PopCamera
+//	wrapper to interface with protocol
+public class AnyPopActor : PopActor
 {
-	//var viewportPixelSize : CGSize
-}
-
-public struct PopRenderCamera
-{
-	public var camera : PopCamera
-	public var viewportPixelSize : CGSize
-	public var viewportPixelSizeSimd : SIMD2<Int>	{	SIMD2<Int>( Int(viewportPixelSize.width), Int(viewportPixelSize.height) )	}
-}
-
-
-public protocol PopActor : ObservableObject
-{
-	//	helpers for now
-	//	setters for UI
-	var translation : simd_float3	{	get set	}
-	var rotationPitch : Angle	{	get set }
-	var rotationYaw : Angle	{	get set	}
+	public var translation : simd_float3	{	get{	wrapped.translation	}		set{	wrapped.translation = newValue	}	}
+	public var rotationPitch: Angle		{	get{	wrapped.rotationPitch	}	set{	wrapped.rotationPitch = newValue	}	}
+	public var rotationYaw: Angle			{	get{	wrapped.rotationYaw	}		set{	wrapped.rotationYaw = newValue	}	}
 	
-	func Render(camera:PopRenderCamera,metalView:MTKView,commandEncoder:any MTLRenderCommandEncoder) throws
-}
-
-public extension PopActor
-{
-	var localToWorldTransform : simd_float4x4	
+	public func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws 
 	{
-		let rotationMatrixX = matrix4x4_rotation(radians: Float(rotationPitch.radians), axis: SIMD3<Float>(1, 0, 0) )
-		let rotationMatrixY = matrix4x4_rotation(radians: Float(rotationYaw.radians), axis: SIMD3<Float>(0, 1, 0) )
-		let translationMatrix = matrix4x4_translation( translation.x, translation.y, translation.z )
-		let localToWorld = translationMatrix * rotationMatrixY * rotationMatrixX
-		return localToWorld
+	}
+	
+	public var id = UUID()
+	var wrapped : any PopActor
+	
+	public init(_ actor:any PopActor)
+	{
+		self.wrapped = actor
 	}
 }
-
-public protocol PopScene
-{
-	var actors : [any PopActor]	{	get	}
-}
-
-
 
 public struct MetalSceneView : View, ContentRenderer
 {
 	var scene : any PopScene
+	var showGizmosOnActors : [UUID]
 	var camera = PopCamera()
 	
-	public init(scene: any PopScene)
+	public init(scene: any PopScene,showGizmosOnActors:[UUID])
 	{
 		self.scene = scene
+		self.showGizmosOnActors = showGizmosOnActors
 	}
 
 	public var body: some View 
 	{
 		MetalView(contentRenderer: self)
+			.overlay
+		{
+			//	showing gizmos in future will require a camera to do 2d<>3d stuff
+			var gizmoActors = scene.Actors(withUids:showGizmosOnActors)
+			//	these need to be a concrete type... how do we do this... damn you lack of virtual types
+			ForEach(gizmoActors, id:\.id)
+			{
+				actor in
+				let actorWrapper = AnyPopActor(actor)
+				ActorGizmo(actor: actorWrapper)
+			}
+	
+		}
 	}
 	
 	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
@@ -105,5 +90,5 @@ struct DummyScene : PopScene
 
 #Preview 
 {
-	MetalSceneView(scene: DummyScene())
+	MetalSceneView(scene: DummyScene(), showGizmosOnActors: [])
 }
