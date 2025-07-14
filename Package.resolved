@@ -1,0 +1,15 @@
+{
+  "originHash" : "bd7474d60b3768b81dbcbee71cad02d01b071491035e620a1f3e7b1b0308e906",
+  "pins" : [
+    {
+      "identity" : "mousetrackingmodifier.swiftpackage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/NewChromantics/MouseTrackingModifier.SwiftPackage",
+      "state" : {
+        "branch" : "main",
+        "revision" : "9ae11a5d97558e9bf5fb92c00058dcd9e1850181"
+      }
+    }
+  ],
+  "version" : 3
+}

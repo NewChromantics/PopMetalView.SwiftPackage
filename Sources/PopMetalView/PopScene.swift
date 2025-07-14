@@ -9,16 +9,25 @@ import simd
 import SwiftUI	//	Angle
 import MetalKit
 
-public struct PopCamera
-{
-	//var viewportPixelSize : CGSize
-}
-
 public struct PopRenderCamera
 {
 	public var camera : PopCamera
 	public var viewportPixelSize : CGSize
 	public var viewportPixelSizeSimd : SIMD2<Int>	{	SIMD2<Int>( Int(viewportPixelSize.width), Int(viewportPixelSize.height) )	}
+	
+	public var worldToViewTransform : simd_float4x4
+	{
+		//	todo: world to camera
+		let worldToCamera = camera.localToWorldTransform.inverse
+		
+		//	camera to clip/view space
+		let projectionMatrix = matrix_perspective_right_hand(fovyRadians: Float(camera.fovVertical.radians),
+															 aspectRatio: Float(viewportPixelSize.width / viewportPixelSize.height),
+															 nearZ: camera.nearZ,
+															 farZ: camera.farZ)
+		
+		return projectionMatrix * worldToCamera
+	}
 }
 
 

@@ -1,7 +1,7 @@
 import SwiftUI
 import Metal
 import MetalKit
-
+import MouseTracking
 
 //	wrapper to interface with protocol
 public class AnyPopActor : PopActor
@@ -27,7 +27,14 @@ public struct MetalSceneView : View, ContentRenderer
 {
 	var scene : any PopScene
 	var showGizmosOnActors : [UUID]
-	var camera = PopCamera()
+	
+	//	todo: move camera & controls to externally controlled by app?(binding)
+	@StateObject var camera = PopCamera()
+	
+	var isDraggingCamera : Bool	{	return draggingLeftMouseFrom != nil || draggingRightMouseFrom != nil || draggingMiddleMouseFrom != nil	}
+	@State var draggingLeftMouseFrom : CGPoint? 
+	@State var draggingRightMouseFrom : CGPoint? 
+	@State var draggingMiddleMouseFrom : CGPoint? 
 	
 	public init(scene: any PopScene,showGizmosOnActors:[UUID])
 	{
@@ -38,10 +45,12 @@ public struct MetalSceneView : View, ContentRenderer
 	public var body: some View 
 	{
 		MetalView(contentRenderer: self)
+			.mouseTracking(OnCameraMouseControl,onScroll: OnCameraMouseControl)
 			.overlay
 		{
 			//	showing gizmos in future will require a camera to do 2d<>3d stuff
-			var gizmoActors = scene.Actors(withUids:showGizmosOnActors)
+			let gizmoActorUids = isDraggingCamera ? [] : showGizmosOnActors
+			var gizmoActors = scene.Actors(withUids:gizmoActorUids)
 			//	these need to be a concrete type... how do we do this... damn you lack of virtual types
 			ForEach(gizmoActors, id:\.id)
 			{
@@ -49,8 +58,51 @@ public struct MetalSceneView : View, ContentRenderer
 				let actorWrapper = AnyPopActor(actor)
 				ActorGizmo(actor: actorWrapper)
 			}
-	
 		}
+	}
+	
+	func OnCameraMouseControl(_ mouseState:MouseState)
+	{
+		if mouseState.rightDown
+		{
+			draggingRightMouseFrom = draggingRightMouseFrom ?? mouseState.position
+			let x = mouseState.position.x - draggingRightMouseFrom!.x
+			let y = mouseState.position.y - draggingRightMouseFrom!.y
+			//	pixel to world
+			//	minus depends where we're facing
+			let moveScalarX = -0.01
+			let moveScalarY = -0.01
+			camera.MoveRelative( Float(x*moveScalarX), Float(y*moveScalarY), 0 )
+			draggingRightMouseFrom = mouseState.position
+		}
+		else
+		{
+			draggingRightMouseFrom = nil
+		}
+		
+		if mouseState.leftDown
+		{
+			draggingLeftMouseFrom = draggingLeftMouseFrom ?? mouseState.position
+			let x = mouseState.position.x - draggingLeftMouseFrom!.x
+			let y = mouseState.position.y - draggingLeftMouseFrom!.y
+			//	pixel to world
+			//	minus depends where we're facing
+			let moveScalarX = -1.0
+			let moveScalarY = 1.0
+			camera.rotationPitch += Angle(degrees:y*moveScalarY)
+			camera.rotationYaw += Angle(degrees:x*moveScalarX)
+			draggingLeftMouseFrom = mouseState.position
+		}
+		else
+		{
+			draggingLeftMouseFrom = nil
+		}
+	}
+	
+	func OnCameraMouseControl(_ scroll:MouseScrollEvent)
+	{
+		let zMove = scroll.scrollDelta * -0.5
+		camera.MoveRelative( 0, 0, Float(zMove) )
 	}
 	
 	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
@@ -78,17 +130,24 @@ public struct MetalSceneView : View, ContentRenderer
 
 struct DummyScene : PopScene
 {
+	var quad = QuadActor()
+	var floor = FloorPlaneActor()
 	var actors : [any PopActor]
+	{
+		[
+			floor,
+			quad
+		]
+	}
 	
 	init()
 	{
-		self.actors = []
-		
-		//	todo: populate with some simple actors that can render a quad etc
 	}
 }
 
 #Preview 
 {
-	MetalSceneView(scene: DummyScene(), showGizmosOnActors: [])
+	@Previewable @State var scene = DummyScene()
+	MetalSceneView(scene: scene, showGizmosOnActors: scene.actors.map{$0.id})
+		.background(.blue)
 }

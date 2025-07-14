@@ -43,6 +43,8 @@ public struct GenericGizmo<PropertyType> : View where PropertyType:Addable
 	
 	var icon : Image
 	
+	var minDragPixels = 2.0
+	
 	var GetDeltaFromDrag : (Double,Double)->PropertyType
 	/*
 	func GetDeltaFromDrag(deltaX:Double,deltaY:Double) -> PropertyType
@@ -54,7 +56,7 @@ public struct GenericGizmo<PropertyType> : View where PropertyType:Addable
 	public var body: some View 
 	{
 		//rotate.3d.circle.fill
-		let drag = DragGesture()
+		let drag = DragGesture(minimumDistance:minDragPixels)
 			.onChanged 
 		{ 
 			dragMeta in
