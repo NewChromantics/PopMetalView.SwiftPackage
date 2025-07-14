@@ -52,6 +52,10 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 	public var rotationPitch = Angle(degrees:0)
 	public var rotationYaw = Angle(degrees:0)
 	
+	public init()
+	{
+	}
+	
 	@MainActor 
 	public func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws 
 	{
