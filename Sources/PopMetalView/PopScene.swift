@@ -15,9 +15,14 @@ public struct PopRenderCamera
 	public var viewportPixelSize : CGSize
 	public var viewportPixelSizeSimd : SIMD2<Int>	{	SIMD2<Int>( Int(viewportPixelSize.width), Int(viewportPixelSize.height) )	}
 	
+	public var worldToCameraTransform : simd_float4x4
+	{
+		let worldToCamera = camera.localToWorldTransform.inverse
+		return worldToCamera
+	}
+	
 	public var worldToViewTransform : simd_float4x4
 	{
-		//	todo: world to camera
 		let worldToCamera = camera.localToWorldTransform.inverse
 		
 		//	camera to clip/view space
