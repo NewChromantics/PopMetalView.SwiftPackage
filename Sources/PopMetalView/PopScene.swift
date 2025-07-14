@@ -53,6 +53,27 @@ public extension PopActor
 		let localToWorld = translationMatrix * rotationMatrixY * rotationMatrixX
 		return localToWorld
 	}
+	
+	var worldForwardDirection : simd_float3
+	{
+		let localToWorld = localToWorldTransform
+		let forward4 = localToWorld * simd_float4(0,0,1,0);
+		return simd_float3(forward4.x,forward4.y,forward4.z)
+	}
+	
+	var worldUpDirection : simd_float3
+	{
+		let localToWorld = localToWorldTransform
+		let forward4 = localToWorld * simd_float4(0,1,0,0);
+		return simd_float3(forward4.x,forward4.y,forward4.z)
+	}
+	
+	var worldRightDirection : simd_float3
+	{
+		let localToWorld = localToWorldTransform
+		let forward4 = localToWorld * simd_float4(1,0,0,0);
+		return simd_float3(forward4.x,forward4.y,forward4.z)
+	}
 }
 
 public protocol PopScene

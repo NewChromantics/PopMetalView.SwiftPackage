@@ -23,9 +23,14 @@ public class PopCamera : PopActor
 	//	move relative to our view
 	public func MoveRelative(_ x:Float,_ y:Float,_ z:Float)
 	{
-		translation.x += x
-		translation.y += y
-		translation.z += z
+		let right = self.worldRightDirection
+		translation += right * x
+		
+		let up = self.worldUpDirection
+		translation += up * y
+		
+		let forward = self.worldForwardDirection
+		translation += forward * z
 	}
 }
 
