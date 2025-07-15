@@ -15,15 +15,24 @@ struct VertexOut
 	float3 worldPosition;
 };
 
-vertex VertexOut FloorPlaneVertex(device const VertexIn* vertices [[buffer(0)]],
-							 uint vertexId [[vertex_id]],
+
+constant float2 quadPositions[] = 
+{
+	float2(0,0),
+	float2(1,0),
+	float2(0,1),
+	float2(1,1)
+};
+
+
+vertex VertexOut FloorPlaneVertex( uint vertexId [[vertex_id]],
 							 uint instanceId [[instance_id]],
 							 constant float4x4& localToWorld[[buffer(1)]],
 							 constant float4x4& worldToView[[buffer(2)]]
 							 ) 
 {
 	VertexOut out;
-	out.uv = vertices[vertexId].localPosition;
+	out.uv = quadPositions[vertexId];
 	float3 localPosition = float3( out.uv.x-0.5, 0, out.uv.y-0.5 ) * PlaneSize;
 	float4 worldPosition = localToWorld * float4(localPosition,1);
 	out.worldPosition = worldPosition.xyz;

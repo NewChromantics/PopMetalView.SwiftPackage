@@ -7,14 +7,15 @@ import SwiftUI	//	Angle
 public class QuadActor : @preconcurrency PopActor
 {
 	public var id = UUID() 
-	public var translation = simd_float3(0,0,0)
+	public var translation : simd_float3
 	public var rotationPitch = Angle(degrees:0)
 	public var rotationYaw = Angle(degrees:0)
 	
 	var geometryPipeline : MTLRenderPipelineDescriptor?
 	
-	public init()
+	public init(translation:simd_float3=simd_float3(0,0,0))
 	{
+		self.translation = translation
 	}
 	
 	@MainActor 
@@ -23,15 +24,7 @@ public class QuadActor : @preconcurrency PopActor
 		self.geometryPipeline = try geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
 		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
 
-		let vertexData: [Float] = [ 0, 0,
-									1, 0, 
-									0, 1, 
-									1, 1
-		]
 		commandEncoder.setRenderPipelineState( pipelineState )
-		//commandEncoder.setVertexBuffer( quad.1, offset: 0, index: 0)
-		let vertexBufferIndex = 0
-		commandEncoder.setVertexBytes(vertexData, length: vertexData.count * MemoryLayout<Float>.stride, index: vertexBufferIndex)
 		
 		var localToWorld = self.localToWorldTransform
 		let localToWorldBufferIndex = 1

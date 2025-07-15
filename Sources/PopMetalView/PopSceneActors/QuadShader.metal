@@ -14,15 +14,22 @@ struct VertexOut
 };
 
 
-vertex VertexOut QuadVertex(device const VertexIn* vertices [[buffer(0)]],
-							 uint vertexId [[vertex_id]],
+constant float2 quadPositions[] = 
+{
+	float2(0,0),
+	float2(1,0),
+	float2(0,1),
+	float2(1,1)
+};
+
+vertex VertexOut QuadVertex( uint vertexId [[vertex_id]],
 							 uint instanceId [[instance_id]],
 							 constant float4x4& localToWorld[[buffer(1)]],
 							 constant float4x4& worldToView[[buffer(2)]]
 							 ) 
 {
 	VertexOut out;
-	out.uv = vertices[vertexId].localPosition;
+	out.uv = quadPositions[vertexId];
 	float2 localPosition = out.uv;
 	float4 worldPosition = localToWorld * float4(localPosition,0,1);
 	float4 viewportPosition = worldToView * float4(worldPosition);

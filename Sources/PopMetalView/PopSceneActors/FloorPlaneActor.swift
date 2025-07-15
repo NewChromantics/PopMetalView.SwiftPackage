@@ -22,16 +22,8 @@ public class FloorPlaneActor : @preconcurrency PopActor
 	{
 		self.geometryPipeline = try geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
 		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
-		
-		let vertexData: [Float] = [ 0, 0,
-									1, 0, 
-									0, 1, 
-									1, 1
-		]
+
 		commandEncoder.setRenderPipelineState( pipelineState )
-		//commandEncoder.setVertexBuffer( quad.1, offset: 0, index: 0)
-		let vertexBufferIndex = 0
-		commandEncoder.setVertexBytes(vertexData, length: vertexData.count * MemoryLayout<Float>.stride, index: vertexBufferIndex)
 		
 		var localToWorld = self.localToWorldTransform
 		let localToWorldBufferIndex = 1
