@@ -28,18 +28,18 @@ public struct MetalSceneView : View, ContentRenderer
 	var scene : any PopScene
 	var showGizmosOnActors : [UUID]
 	
-	//	todo: move camera & controls to externally controlled by app?(binding)
-	@StateObject var camera = PopCamera()
+	@Binding var camera : PopCamera
 	
 	var isDraggingCamera : Bool	{	return draggingLeftMouseFrom != nil || draggingRightMouseFrom != nil || draggingMiddleMouseFrom != nil	}
 	@State var draggingLeftMouseFrom : CGPoint? 
 	@State var draggingRightMouseFrom : CGPoint? 
 	@State var draggingMiddleMouseFrom : CGPoint? 
 	
-	public init(scene: any PopScene,showGizmosOnActors:[UUID])
+	public init(scene: any PopScene,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
 	{
 		self.scene = scene
 		self.showGizmosOnActors = showGizmosOnActors
+		self._camera = camera
 	}
 
 	public var body: some View 
@@ -132,11 +132,15 @@ struct DummyScene : PopScene
 {
 	var quad = QuadActor()
 	var floor = FloorPlaneActor()
+	var camera1 = PopCamera()
+	var camera2 = PopCamera(translation:simd_float3(1,0.5,-1))
 	var actors : [any PopActor]
 	{
 		[
 			floor,
-			quad
+			quad,
+			camera1,
+			camera2
 		]
 	}
 	
@@ -148,6 +152,27 @@ struct DummyScene : PopScene
 #Preview 
 {
 	@Previewable @State var scene = DummyScene()
-	MetalSceneView(scene: scene, showGizmosOnActors: scene.actors.map{$0.id})
+	@Previewable @State var useCamera1 = true
+	var cameraBinding = Binding<PopCamera>(
+		get:{
+			useCamera1 ? scene.camera1 : scene.camera2
+		},
+		set:	{_ in}//_ in 	useCamera1 ? scene.camera1 : scene.camera2	}
+	)
+	MetalSceneView(scene: scene, camera:cameraBinding, showGizmosOnActors: scene.actors.map{$0.id})
 		.background(.blue)
+		.overlay
+	{
+		VStack
+		{
+			Spacer()
+			Toggle(isOn: $useCamera1)
+			{
+				Text("Use camera 1")
+					.foregroundStyle(.white)
+			}
+			.padding(5)
+			.background(.black)
+		}
+	}
 }
