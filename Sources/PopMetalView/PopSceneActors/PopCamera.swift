@@ -23,6 +23,13 @@ public class PopCamera : @preconcurrency PopActor
 		self.translation = translation
 	}
 	
+	public init(localToWorldTransform:simd_float4x4)
+	{
+		//	extract stuff
+		let pos4 = localToWorldTransform * simd_float4(0,0,0,1)
+		self.translation = simd_float3(pos4.x,pos4.y,pos4.z)
+	}
+	
 	public func GetProjectionMatrix(viewportSize:CGSize) -> simd_float4x4	{	GetLocalToViewTransform(viewportSize:viewportSize)	}
 	
 	public func GetLocalToViewTransform(viewportSize:CGSize) -> simd_float4x4
