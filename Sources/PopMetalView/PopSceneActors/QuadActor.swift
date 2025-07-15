@@ -25,6 +25,7 @@ public class QuadActor : @preconcurrency PopActor
 		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
 
 		commandEncoder.setRenderPipelineState( pipelineState )
+		enableDepthReadWrite(commandEncoder)
 		
 		var localToWorld = self.localToWorldTransform
 		let localToWorldBufferIndex = 1

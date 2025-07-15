@@ -24,7 +24,8 @@ public class FloorPlaneActor : @preconcurrency PopActor
 		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
 
 		commandEncoder.setRenderPipelineState( pipelineState )
-		
+		enableDepthReadWrite(commandEncoder)
+
 		var localToWorld = self.localToWorldTransform
 		let localToWorldBufferIndex = 1
 		commandEncoder.setVertexBytes(&localToWorld, length: MemoryLayout<simd_float4x4>.stride, index:localToWorldBufferIndex )

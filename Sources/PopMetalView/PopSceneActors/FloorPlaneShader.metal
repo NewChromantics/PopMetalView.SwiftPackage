@@ -56,5 +56,12 @@ fragment float4 FloorPlaneFragment(VertexOut in [[stage_in]])
 	float aa = EdgeSize * 0.10;
 	float alpha = smoothstep( EdgeSize+aa, EdgeSize-aa, distance );
 	alpha = clamp(0.0,1.0,alpha);
+	
+	//	todo: shouldn't need this, need to be rendering transparent objects after opaque
+	if ( alpha < 0.9 )
+	{
+		discard_fragment();
+	}
+	
 	return float4(1,1,1,alpha);
 }

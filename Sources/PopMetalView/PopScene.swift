@@ -86,6 +86,18 @@ public extension PopActor
 		let forward = self.worldForwardDirection
 		translation += forward * z
 	}
+	
+	func enableDepthReadWrite(_ commandEncoder:(any MTLRenderCommandEncoder))
+	{
+		//	should cache this descriptor
+		let depthStateDescriptor = MTLDepthStencilDescriptor()
+		
+		depthStateDescriptor.depthCompareFunction = MTLCompareFunction.lessEqual
+		depthStateDescriptor.isDepthWriteEnabled = true
+		
+		let depthState = commandEncoder.device.makeDepthStencilState(descriptor:depthStateDescriptor)!
+		commandEncoder.setDepthStencilState(depthState)
+	}
 }
 
 public protocol PopScene
