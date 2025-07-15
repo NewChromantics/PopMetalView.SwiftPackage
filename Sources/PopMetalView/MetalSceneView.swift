@@ -130,7 +130,8 @@ public struct MetalSceneView : View, ContentRenderer
 
 struct DummyScene : PopScene
 {
-	var quad = QuadActor()
+	var quad = QuadActor(translation: simd_float3(-1.5,0,-0.5) )
+	var cube = CubeActor(translation: simd_float3(-2,0,-2) )
 	var floor = FloorPlaneActor()
 	var camera1 = PopCamera()
 	var camera2 = PopCamera(translation:simd_float3(1,0.5,-1))
@@ -138,6 +139,7 @@ struct DummyScene : PopScene
 	{
 		[
 			floor,
+			cube,
 			quad,
 			camera1,
 			camera2
