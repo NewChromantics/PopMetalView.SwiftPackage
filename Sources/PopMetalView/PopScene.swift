@@ -38,13 +38,15 @@ public protocol PopActor : ObservableObject, Identifiable
 	var translation : simd_float3	{	get set	}
 	var rotationPitch : Angle	{	get set }
 	var rotationYaw : Angle	{	get set	}
+	var localToWorldTransform : simd_float4x4	{	get	}
 	
 	func Render(camera:PopRenderCamera,metalView:MTKView,commandEncoder:any MTLRenderCommandEncoder) throws
 }
 
 public extension PopActor
 {
-	var localToWorldTransform : simd_float4x4	
+	var localToWorldTransform : simd_float4x4	{	GetLocalToWorldTransform()	}
+	func GetLocalToWorldTransform() -> simd_float4x4	
 	{
 		let rotationMatrixX = matrix4x4_rotation(radians: Float(rotationPitch.radians), axis: SIMD3<Float>(1, 0, 0) )
 		let rotationMatrixY = matrix4x4_rotation(radians: Float(rotationYaw.radians), axis: SIMD3<Float>(0, 1, 0) )

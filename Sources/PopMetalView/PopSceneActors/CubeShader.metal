@@ -4,8 +4,8 @@ using namespace metal;
 
 //	make this a variable!
 //	this is the distance to extend the non-infinite projection
-constant float ProjectionRenderFar = 2.0;
-constant float ProjectionRenderNear = 0.1;
+constant float ProjectionRenderFar = 0.5;
+constant float ProjectionRenderNear = 0.01;
 constant float4 ProjectedCubeColour = float4(1,0.4,0,1.0);
 
 struct VertexIn 

@@ -15,8 +15,12 @@ public class PopCamera : @preconcurrency PopActor
 	@Published public var nearZ : Float = 0.001
 	@Published public var farZ : Float = 100.0
 
+	var debugProjectionViewportSize : CGSize	{	CGSize(width: 2,height: 1)	}
+	
 	var geometryPipeline : MTLRenderPipelineDescriptor?
 
+	var stored_localToWorldTransform : float4x4?
+	public var localToWorldTransform : float4x4	{	stored_localToWorldTransform ?? GetLocalToWorldTransform()	}
 	
 	public init(translation: simd_float3=simd_float3(0,1,3))
 	{
@@ -25,6 +29,8 @@ public class PopCamera : @preconcurrency PopActor
 	
 	public init(localToWorldTransform:simd_float4x4)
 	{
+		stored_localToWorldTransform = localToWorldTransform
+		
 		//	extract stuff
 		let pos4 = localToWorldTransform * simd_float4(0,0,0,1)
 		self.translation = simd_float3(pos4.x,pos4.y,pos4.z)
@@ -70,7 +76,7 @@ public class PopCamera : @preconcurrency PopActor
 		let worldToViewBufferIndex = 2
 		commandEncoder.setVertexBytes(&worldToView, length: MemoryLayout<simd_float4x4>.stride, index:worldToViewBufferIndex )
 		
-		var viewToLocal = self.GetLocalToViewTransform(viewportSize: CGSize(width: 1,height: 1)).inverse
+		var viewToLocal = self.GetLocalToViewTransform(viewportSize: debugProjectionViewportSize).inverse
 		let viewToLocalBufferIndex = 3
 		commandEncoder.setVertexBytes(&viewToLocal, length: MemoryLayout<simd_float4x4>.stride, index:viewToLocalBufferIndex )
 		
