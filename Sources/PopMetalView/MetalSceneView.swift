@@ -25,7 +25,7 @@ public class AnyPopActor : PopActor
 
 public struct MetalSceneView : View, ContentRenderer
 {
-	var scene : any PopScene
+	@Binding var scene : any PopScene
 	var showGizmosOnActors : [UUID]
 	
 	@Binding var camera : PopCamera
@@ -35,13 +35,20 @@ public struct MetalSceneView : View, ContentRenderer
 	@State var draggingRightMouseFrom : CGPoint? 
 	@State var draggingMiddleMouseFrom : CGPoint? 
 	
-	public init(scene: any PopScene,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
+	public init<SceneType:PopScene>(scene:Binding<SceneType>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
 	{
-		self.scene = scene
+		self._scene = Binding<any PopScene>( get: {scene.wrappedValue}, set:{_ in} )
 		self.showGizmosOnActors = showGizmosOnActors
 		self._camera = camera
 	}
-
+	/*
+	public init(scene:Binding<any PopScene>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
+	{
+		self._scene = scene
+		self.showGizmosOnActors = showGizmosOnActors
+		self._camera = camera
+	}
+*/
 	public var body: some View 
 	{
 		MetalView(contentRenderer: self)
@@ -161,7 +168,7 @@ struct DummyScene : PopScene
 		},
 		set:	{_ in}//_ in 	useCamera1 ? scene.camera1 : scene.camera2	}
 	)
-	MetalSceneView(scene: scene, camera:cameraBinding, showGizmosOnActors: scene.actors.map{$0.id})
+	MetalSceneView(scene: $scene, camera:cameraBinding, showGizmosOnActors: scene.actors.map{$0.id})
 		.background(.blue)
 		.overlay
 	{
