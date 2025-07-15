@@ -24,14 +24,8 @@ public struct PopRenderCamera
 	public var worldToViewTransform : simd_float4x4
 	{
 		let worldToCamera = camera.localToWorldTransform.inverse
-		
-		//	camera to clip/view space
-		let projectionMatrix = matrix_perspective_right_hand(fovyRadians: Float(camera.fovVertical.radians),
-															 aspectRatio: Float(viewportPixelSize.width / viewportPixelSize.height),
-															 nearZ: camera.nearZ,
-															 farZ: camera.farZ)
-		
-		return projectionMatrix * worldToCamera
+		let cameraToView = camera.GetLocalToViewTransform(viewportSize: viewportPixelSize)
+		return cameraToView * worldToCamera
 	}
 }
 
@@ -78,6 +72,19 @@ public extension PopActor
 		let localToWorld = localToWorldTransform
 		let forward4 = localToWorld * simd_float4(1,0,0,0);
 		return simd_float3(forward4.x,forward4.y,forward4.z)
+	}
+	
+	//	move relative to our view
+	func MoveRelative(_ x:Float,_ y:Float,_ z:Float)
+	{
+		let right = self.worldRightDirection
+		translation += right * x
+		
+		let up = self.worldUpDirection
+		translation += up * y
+		
+		let forward = self.worldForwardDirection
+		translation += forward * z
 	}
 }
 
