@@ -197,11 +197,11 @@ float3 GetProjectionDir(float x,float y,float4x4 viewToLocal)
 	return normalize(dir);
 }
 
-float3 GetProjectedLocalPosition(float u,float v,float z,float4x4 projection)
+float3 GetProjectedLocalPosition(float u,float v,float z,float4x4 viewToLocal)
 {
 	//	calculate projection space directions
 	float2 viewxy = mix( float2(-1), float2(1), float2(u,v) );
-	float3 dir = GetProjectionDir(viewxy.x,viewxy.y,projection);
+	float3 dir = GetProjectionDir(viewxy.x,viewxy.y,viewToLocal);
 	float3 localPosition = dir * mix( ProjectionRenderNear, ProjectionRenderFar, z );
 	return localPosition;
 }
@@ -210,7 +210,7 @@ vertex ProjectedCubeVertexOut ProjectedCubeVertex( uint vertexId [[vertex_id]],
 									 uint instanceId [[instance_id]],
 									 constant float4x4& localToWorld[[buffer(1)]],
 									 constant float4x4& worldToView[[buffer(2)]],
-									 constant float4x4& projection[[buffer(3)]]
+									 constant float4x4& viewToLocal[[buffer(3)]]
 									 ) 
 {
 	ProjectedCubeVertexOut out;
@@ -218,18 +218,18 @@ vertex ProjectedCubeVertexOut ProjectedCubeVertex( uint vertexId [[vertex_id]],
 	
 	//	calculate projection space directions
 	float2 viewxy = mix( float2(-1), float2(1), float2(vert.x,vert.y) );
-	float3 dir = GetProjectionDir(viewxy.x,viewxy.y,projection);
+	float3 dir = GetProjectionDir(viewxy.x,viewxy.y,viewToLocal);
 	float3 localPosition = dir * mix( ProjectionRenderNear, ProjectionRenderFar, vert.z );
 
-	out.LocalPosition = GetProjectedLocalPosition( vert.x,vert.y, vert.z, projection );
-	out.Cube_000 = GetProjectedLocalPosition( 0,0,0, projection );
-	out.Cube_100 = GetProjectedLocalPosition( 1,0,0, projection );
-	out.Cube_010 = GetProjectedLocalPosition( 0,1,0, projection );
-	out.Cube_110 = GetProjectedLocalPosition( 1,1,0, projection );
-	out.Cube_001 = GetProjectedLocalPosition( 0,0,1, projection );
-	out.Cube_101 = GetProjectedLocalPosition( 1,0,1, projection );
-	out.Cube_011 = GetProjectedLocalPosition( 0,1,1, projection );
-	out.Cube_111 = GetProjectedLocalPosition( 1,1,1, projection );
+	out.LocalPosition = GetProjectedLocalPosition( vert.x,vert.y, vert.z, viewToLocal );
+	out.Cube_000 = GetProjectedLocalPosition( 0,0,0, viewToLocal );
+	out.Cube_100 = GetProjectedLocalPosition( 1,0,0, viewToLocal );
+	out.Cube_010 = GetProjectedLocalPosition( 0,1,0, viewToLocal );
+	out.Cube_110 = GetProjectedLocalPosition( 1,1,0, viewToLocal );
+	out.Cube_001 = GetProjectedLocalPosition( 0,0,1, viewToLocal );
+	out.Cube_101 = GetProjectedLocalPosition( 1,0,1, viewToLocal );
+	out.Cube_011 = GetProjectedLocalPosition( 0,1,1, viewToLocal );
+	out.Cube_111 = GetProjectedLocalPosition( 1,1,1, viewToLocal );
 	
 	float4 worldPosition = localToWorld * float4(localPosition,1);
 	float4 viewportPosition = worldToView * float4(worldPosition);

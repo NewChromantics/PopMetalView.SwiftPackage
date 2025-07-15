@@ -18,7 +18,7 @@ public class PopCamera : @preconcurrency PopActor
 	var geometryPipeline : MTLRenderPipelineDescriptor?
 
 	
-	init(translation: simd_float3=simd_float3(0,1,3))
+	public init(translation: simd_float3=simd_float3(0,1,3))
 	{
 		self.translation = translation
 	}
@@ -63,9 +63,9 @@ public class PopCamera : @preconcurrency PopActor
 		let worldToViewBufferIndex = 2
 		commandEncoder.setVertexBytes(&worldToView, length: MemoryLayout<simd_float4x4>.stride, index:worldToViewBufferIndex )
 		
-		var projection = self.GetProjectionMatrix(viewportSize: CGSize(width: 1,height: 1)).inverse
-		let projectionBufferIndex = 3
-		commandEncoder.setVertexBytes(&projection, length: MemoryLayout<simd_float4x4>.stride, index:projectionBufferIndex )
+		var viewToLocal = self.GetLocalToViewTransform(viewportSize: CGSize(width: 1,height: 1)).inverse
+		let viewToLocalBufferIndex = 3
+		commandEncoder.setVertexBytes(&viewToLocal, length: MemoryLayout<simd_float4x4>.stride, index:viewToLocalBufferIndex )
 		
 		commandEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3*2*6 )
 	}
