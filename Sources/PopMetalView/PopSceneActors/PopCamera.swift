@@ -4,7 +4,7 @@ import SwiftUI	//	angle
 import MetalKit
 
 
-public class PopCamera : @preconcurrency PopActor
+open class PopCamera : @preconcurrency PopActor
 {
 	public var id = UUID()
 	@Published public var translation = simd_float3(0,1,3)
@@ -21,7 +21,7 @@ public class PopCamera : @preconcurrency PopActor
 	var geometryPipelineState : MTLRenderPipelineState?
 
 	public var override_localToWorldTransform : float4x4?
-	public var localToWorldTransform : float4x4	
+	open var localToWorldTransform : float4x4	
 	{
 		get	{	override_localToWorldTransform ?? GetLocalToWorldTransform()	}
 		set 
@@ -63,7 +63,7 @@ public class PopCamera : @preconcurrency PopActor
 	}
 	
 	@MainActor
-	public func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws
+	open func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws
 	{
 		//	if we're rendering through ourselves, dont draw our projection (it'll just be on-screen)
 		if camera.camera.id == self.id
@@ -95,7 +95,7 @@ public class PopCamera : @preconcurrency PopActor
 	}
 	
 	@MainActor 
-	func CreateGeometryPipelineDescriptor(metalView:MTKView) throws -> MTLRenderPipelineDescriptor
+	open func CreateGeometryPipelineDescriptor(metalView:MTKView) throws -> MTLRenderPipelineDescriptor
 	{
 		guard let device = metalView.device else
 		{

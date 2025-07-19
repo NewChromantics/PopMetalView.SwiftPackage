@@ -3,7 +3,7 @@ import MetalKit
 import Foundation
 import SwiftUI	//	Angle
 
-public class CubeActor : @preconcurrency PopActor
+open class CubeActor : @preconcurrency PopActor
 {
 	public var id = UUID() 
 	public var translation : simd_float3
@@ -19,7 +19,7 @@ public class CubeActor : @preconcurrency PopActor
 	}
 	
 	@MainActor
-	public func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws 
+	open func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws 
 	{
 		CubeActor.geometryPipeline = try CubeActor.geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
 		CubeActor.geometryPipelineState = try metalView.device!.makeRenderPipelineState(descriptor: CubeActor.geometryPipeline!)
@@ -41,7 +41,7 @@ public class CubeActor : @preconcurrency PopActor
 	}
 	
 	@MainActor 
-	func CreateGeometryPipelineDescriptor(metalView:MTKView) throws -> MTLRenderPipelineDescriptor
+	open func CreateGeometryPipelineDescriptor(metalView:MTKView) throws -> MTLRenderPipelineDescriptor
 	{
 		guard let device = metalView.device else
 		{
