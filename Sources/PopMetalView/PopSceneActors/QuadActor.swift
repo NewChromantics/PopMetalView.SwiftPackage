@@ -52,6 +52,8 @@ public class QuadActor : @preconcurrency PopActor
 		pipelineDescriptor.vertexFunction = shaderLibrary.makeFunction(name: "QuadVertex")
 		pipelineDescriptor.fragmentFunction = shaderLibrary.makeFunction(name: "QuadFragment")
 		
+		pipelineDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
+		
 		let attachment = pipelineDescriptor.colorAttachments[0]!
 		attachment.pixelFormat = metalView.colorPixelFormat
 		/*

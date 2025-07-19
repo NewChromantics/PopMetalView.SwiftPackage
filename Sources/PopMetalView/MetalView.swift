@@ -29,6 +29,10 @@ extension MTKView
 
 public protocol ContentRenderer
 {
+	//	setup clear colour, targets etc - before first draw()
+	@MainActor
+	func SetupView(metalView:MTKView)
+
 	@MainActor
 	func Draw(metalView:MTKView,size:CGSize,commandEncoder:any MTLRenderCommandEncoder) throws
 }
@@ -230,6 +234,10 @@ public struct MetalViewDirect : UIViewRepresentable
 		//view.colorPixelFormat = MTLPixelFormat.bgra8Unorm_srgb
 		//view.isOpaque = false
 		view.backgroundColor = UIColor.clear
+
+		//	setup metal view before drawing
+		self.contentRenderer.SetupView(metalView: view)
+
 		return view
 	}
 	
@@ -416,11 +424,15 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 		return pipelineState
 	}
 	
+	@MainActor
+	func SetupView(metalView:MTKView)
+	{
+		metalView.clearColor = MTLClearColor(red: 1.2, green: 0.9, blue: 1.0, alpha: 1.0)
+	}
+	
 	@MainActor 
 	func Draw(metalView: MTKView, size: CGSize,commandEncoder:any MTLRenderCommandEncoder) throws 
 	{
-		metalView.clearColor = MTLClearColor(red: 1.2, green: 0.9, blue: 1.0, alpha: 1.0)
-		
 		let quadPipeline = try MakeQuadPipeline(metalView: metalView)
 		
 		let vertexData: [Float] = [ 0, 0,
@@ -444,6 +456,10 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 
 class PreviewErrorRenderer : ContentRenderer
 {
+	func SetupView(metalView: MTKView) 
+	{
+	}
+	
 	func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws {
 		throw MetalError("Preview Error")
 	}

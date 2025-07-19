@@ -112,16 +112,21 @@ public struct MetalSceneView : View, ContentRenderer
 		camera.MoveRelative( 0, 0, Float(zMove) )
 	}
 	
-	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
+	@MainActor
+	public func SetupView(metalView:MTKView)
 	{
-		metalView.depthStencilPixelFormat = MTLPixelFormat.depth32Float_stencil8
+		metalView.depthStencilPixelFormat = MTLPixelFormat.depth32Float//_stencil8
 		//metalView.colorPixelFormat = MTLPixelFormat.bgra8Unorm_srgb
 		metalView.colorPixelFormat = MTLPixelFormat.bgra8Unorm
 		metalView.clearDepth = 1.0
 		//	splats need to blend with black
 		metalView.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
 		metalView.sampleCount = 1
-		
+	}
+
+	@MainActor
+	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
+	{
 		let renderCamera = PopRenderCamera(camera: self.camera, viewportPixelSize: size)
 		
 		//	render each actor

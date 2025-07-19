@@ -53,6 +53,8 @@ public class FloorPlaneActor : @preconcurrency PopActor
 		pipelineDescriptor.vertexFunction = shaderLibrary.makeFunction(name: "FloorPlaneVertex")
 		pipelineDescriptor.fragmentFunction = shaderLibrary.makeFunction(name: "FloorPlaneFragment")
 		
+		pipelineDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
+		
 		let attachment = pipelineDescriptor.colorAttachments[0]!
 		attachment.pixelFormat = metalView.colorPixelFormat
 
