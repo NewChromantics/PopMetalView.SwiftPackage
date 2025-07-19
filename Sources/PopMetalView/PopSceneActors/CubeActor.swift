@@ -10,7 +10,8 @@ public class CubeActor : @preconcurrency PopActor
 	public var rotationPitch = Angle(degrees:0)
 	public var rotationYaw = Angle(degrees:0)
 	
-	var geometryPipeline : MTLRenderPipelineDescriptor?
+	@MainActor static var geometryPipeline : MTLRenderPipelineDescriptor?
+	@MainActor static var geometryPipelineState : MTLRenderPipelineState?
 	
 	public init(translation:simd_float3=simd_float3(0,0,0))
 	{
@@ -20,8 +21,9 @@ public class CubeActor : @preconcurrency PopActor
 	@MainActor
 	public func Render(camera: PopRenderCamera, metalView: MTKView, commandEncoder: any MTLRenderCommandEncoder) throws 
 	{
-		self.geometryPipeline = try geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
-		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
+		CubeActor.geometryPipeline = try CubeActor.geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
+		CubeActor.geometryPipelineState = try metalView.device!.makeRenderPipelineState(descriptor: CubeActor.geometryPipeline!)
+		let pipelineState = CubeActor.geometryPipelineState!
 
 		commandEncoder.setRenderPipelineState( pipelineState )
 

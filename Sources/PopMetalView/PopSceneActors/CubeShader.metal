@@ -7,6 +7,8 @@ using namespace metal;
 constant float ProjectionRenderFar = 0.5;
 constant float ProjectionRenderNear = 0.01;
 constant float4 ProjectedCubeColour = float4(1,0.4,0,1.0);
+constant float EdgeSize = ProjectionRenderNear * 0.50;
+
 
 struct VertexIn 
 {
@@ -169,7 +171,6 @@ fragment float4 EdgedCubeFragment(ProjectedCubeVertexOut in [[stage_in]])
 	distance = min( distance, DistanceToLine( in.LocalPosition, in.Cube_111, in.Cube_101 ) );
 	distance = min( distance, DistanceToLine( in.LocalPosition, in.Cube_101, in.Cube_100 ) );
 
-	float EdgeSize = ProjectionRenderNear * 0.30;
 	
 	//	calculate an anti-alias alpha with smoothstep using a curve for a threshold very close to our edge width
 	//	todo: put AA threshold should be in in screen space!
