@@ -57,7 +57,7 @@ public struct MetalSceneView : View, ContentRenderer
 		{
 			//	showing gizmos in future will require a camera to do 2d<>3d stuff
 			let gizmoActorUids = isDraggingCamera ? [] : showGizmosOnActors
-			var gizmoActors = scene.Actors(withUids:gizmoActorUids)
+			let gizmoActors = scene.Actors(withUids:gizmoActorUids)
 			//	these need to be a concrete type... how do we do this... damn you lack of virtual types
 			ForEach(gizmoActors, id:\.id)
 			{
