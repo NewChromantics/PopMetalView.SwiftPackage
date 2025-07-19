@@ -18,9 +18,23 @@ public class PopCamera : @preconcurrency PopActor
 	var debugProjectionViewportSize : CGSize	{	CGSize(width: 2,height: 1)	}
 	
 	var geometryPipeline : MTLRenderPipelineDescriptor?
+	var geometryPipelineState : MTLRenderPipelineState?
 
-	var stored_localToWorldTransform : float4x4?
-	public var localToWorldTransform : float4x4	{	stored_localToWorldTransform ?? GetLocalToWorldTransform()	}
+	public var override_localToWorldTransform : float4x4?
+	public var localToWorldTransform : float4x4	
+	{
+		get	{	override_localToWorldTransform ?? GetLocalToWorldTransform()	}
+		set 
+		{
+			override_localToWorldTransform = newValue
+			
+			//	extract stuff
+			let pos4 = newValue * simd_float4(0,0,0,1)
+			self.translation = simd_float3(pos4.x,pos4.y,pos4.z)
+			self.rotationYaw = Angle(degrees: 0)
+			self.rotationPitch = Angle(degrees: 0)
+		}
+	}
 	
 	public init(translation: simd_float3=simd_float3(0,1,3))
 	{
@@ -29,11 +43,7 @@ public class PopCamera : @preconcurrency PopActor
 	
 	public init(localToWorldTransform:simd_float4x4)
 	{
-		stored_localToWorldTransform = localToWorldTransform
-		
-		//	extract stuff
-		let pos4 = localToWorldTransform * simd_float4(0,0,0,1)
-		self.translation = simd_float3(pos4.x,pos4.y,pos4.z)
+		self.localToWorldTransform = localToWorldTransform
 	}
 	
 	public func GetProjectionMatrix(viewportSize:CGSize) -> simd_float4x4	{	GetLocalToViewTransform(viewportSize:viewportSize)	}
@@ -62,9 +72,10 @@ public class PopCamera : @preconcurrency PopActor
 		}
 		
 		self.geometryPipeline = try geometryPipeline ?? CreateGeometryPipelineDescriptor(metalView: metalView)
-		let pipelineState = try metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
+		//	this is very slow!? can we create once per device...
+		self.geometryPipelineState = try self.geometryPipelineState ?? metalView.device!.makeRenderPipelineState(descriptor: geometryPipeline!)
 		
-		commandEncoder.setRenderPipelineState( pipelineState )
+		commandEncoder.setRenderPipelineState( geometryPipelineState! )
 		
 		enableDepthReadWrite(commandEncoder)
 		
