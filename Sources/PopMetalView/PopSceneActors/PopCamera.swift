@@ -36,9 +36,11 @@ open class PopCamera : @preconcurrency PopActor
 		}
 	}
 	
-	public init(translation: simd_float3=simd_float3(0,1,3))
+	public init(translation: simd_float3?=nil,yaw:Angle?=nil,pitch:Angle?=nil)
 	{
-		self.translation = translation
+		self.translation = translation ?? self.translation
+		self.rotationYaw = yaw ?? self.rotationYaw
+		self.rotationPitch = pitch ?? self.rotationPitch
 	}
 	
 	public init(localToWorldTransform:simd_float4x4)
