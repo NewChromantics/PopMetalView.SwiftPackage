@@ -34,6 +34,8 @@ public struct MetalSceneView : View, ContentRenderer
 	@State var draggingLeftMouseFrom : CGPoint? 
 	@State var draggingRightMouseFrom : CGPoint? 
 	@State var draggingMiddleMouseFrom : CGPoint? 
+	@State var draggingLastGestureFrom : CGSize? 
+	@State var rotationLastGestureFrom : Angle? 
 	
 	public init<SceneType:PopScene>(scene:Binding<SceneType>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
 	{
@@ -42,17 +44,23 @@ public struct MetalSceneView : View, ContentRenderer
 		self._camera = camera
 	}
 	/*
-	public init(scene:Binding<any PopScene>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
-	{
-		self._scene = scene
-		self.showGizmosOnActors = showGizmosOnActors
-		self._camera = camera
-	}
-*/
+	 public init(scene:Binding<any PopScene>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
+	 {
+	 self._scene = scene
+	 self.showGizmosOnActors = showGizmosOnActors
+	 self._camera = camera
+	 }
+	 */
+	
+
+	
 	public var body: some View 
 	{
 		MetalView(contentRenderer: self)
 			.mouseTracking(OnCameraMouseControl,onScroll: OnCameraMouseControl)
+			.gesture(cameraDragGesture)
+			.gesture(cameraRotateGesture)
+			.gesture(cameraZoomGesture)
 			.overlay
 		{
 			//	showing gizmos in future will require a camera to do 2d<>3d stuff
@@ -65,6 +73,70 @@ public struct MetalSceneView : View, ContentRenderer
 				let actorWrapper = AnyPopActor(actor)
 				ActorGizmo(actor: actorWrapper)
 			}
+		}
+	}
+	
+	
+	var cameraDragGesture : some Gesture
+	{
+		DragGesture()
+			.onChanged 
+		{ 
+			value in
+			draggingLastGestureFrom = draggingLastGestureFrom ?? value.translation
+			let x = value.translation.width - draggingLastGestureFrom!.width
+			let y = value.translation.height - draggingLastGestureFrom!.height
+			//	move camera
+			let moveScalarX = -0.001
+			let moveScalarY = 0.001
+			//print("move camera \(x), \(y)")
+			camera.MoveRelative( Float(x*moveScalarX), Float(y*moveScalarY), 0 )
+			draggingLastGestureFrom = value.translation
+		}
+		.onEnded 
+		{ 
+			_ in
+			draggingLastGestureFrom = nil
+		}
+	}
+	
+	var cameraRotateGesture : some Gesture
+	{
+		//	RotateGesture3D vision os
+		RotateGesture()
+			.onChanged
+		{
+			gesture in
+			//	gr: not sure what gesture makes this happen, but sometimes get a nan
+			if gesture.rotation.degrees.isNaN
+			{
+				return
+			}
+			
+			rotationLastGestureFrom = rotationLastGestureFrom ?? gesture.rotation
+			let rotation = gesture.rotation - rotationLastGestureFrom!
+			camera.rotationYaw += rotation
+			rotationLastGestureFrom = gesture.rotation
+		}
+		.onEnded
+		{
+			_ in
+			rotationLastGestureFrom = nil
+		}
+	}
+	
+	var cameraZoomGesture : some Gesture
+	{
+		//	not triggering
+		MagnifyGesture(minimumScaleDelta: 0)
+			.onChanged
+		{
+			magnify in
+			
+			print("zoom camera \(magnify.magnification)")
+			
+			let zMove = magnify.magnification * -0.5
+			camera.MoveRelative( 0, 0, Float(zMove) )
 		}
 	}
 	
