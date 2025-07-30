@@ -25,7 +25,7 @@ public class AnyPopActor : PopActor
 
 public struct MetalSceneView : View, ContentRenderer
 {
-	@Binding var scene : any PopScene
+	/*@Binding*/ var scene : any PopScene
 	var showGizmosOnActors : [UUID]
 	
 	@Binding var camera : PopCamera
@@ -39,7 +39,8 @@ public struct MetalSceneView : View, ContentRenderer
 	
 	public init<SceneType:PopScene>(scene:Binding<SceneType>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
 	{
-		self._scene = Binding<any PopScene>( get: {scene.wrappedValue}, set:{_ in} )
+		//self._scene = Binding<any PopScene>( get: {scene.wrappedValue}, set:{_ in} )
+		self.scene = scene.wrappedValue
 		self.showGizmosOnActors = showGizmosOnActors
 		self._camera = camera
 	}
