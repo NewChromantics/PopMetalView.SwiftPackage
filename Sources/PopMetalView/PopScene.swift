@@ -60,6 +60,8 @@ public protocol PopActor : ObservableObject, Identifiable
 
 public extension PopActor
 {
+	var name : String	{	id.uuidString	}
+
 	var localToWorldTransform : simd_float4x4	{	GetLocalToWorldTransform()	}
 	func GetLocalToWorldTransform() -> simd_float4x4	
 	{
