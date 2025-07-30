@@ -9,11 +9,24 @@ import simd
 import SwiftUI	//	Angle
 import MetalKit
 
+//	polyfill orientation instead of making a proprietry orientation
+#if os(macOS)
+public enum UIInterfaceOrientation
+{
+	case unknown
+	case portrait
+	case portraitUpsideDown
+	case landscapeLeft
+	case landscapeRight
+}
+#endif
+
 public struct PopRenderCamera
 {
 	public var camera : PopCamera
 	public var viewportPixelSize : CGSize
 	public var viewportPixelSizeSimd : SIMD2<Int>	{	SIMD2<Int>( Int(viewportPixelSize.width), Int(viewportPixelSize.height) )	}
+	public var viewportOrientation : UIInterfaceOrientation// = .unknown
 	
 	public var worldToCameraTransform : simd_float4x4
 	{
@@ -24,7 +37,9 @@ public struct PopRenderCamera
 	public var worldToViewTransform : simd_float4x4
 	{
 		let worldToCamera = camera.localToWorldTransform.inverse
-		let cameraToView = camera.GetLocalToViewTransform(viewportSize: viewportPixelSize)
+		//	most cameras wont need to apply orientation
+		//	the ARKit camera does... but why? because the local to world is rotated? (I dont think so?)
+		let cameraToView = camera.GetLocalToViewTransform(viewportSize: viewportPixelSize, orientation: viewportOrientation)
 		return cameraToView * worldToCamera
 	}
 }

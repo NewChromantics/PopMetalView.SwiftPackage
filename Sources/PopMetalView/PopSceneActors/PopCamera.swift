@@ -4,6 +4,8 @@ import SwiftUI	//	angle
 import MetalKit
 
 
+
+
 open class PopCamera : @preconcurrency PopActor
 {
 	public var id = UUID()
@@ -48,20 +50,59 @@ open class PopCamera : @preconcurrency PopActor
 		self.localToWorldTransform = localToWorldTransform
 	}
 	
-	public func GetProjectionMatrix(viewportSize:CGSize) -> simd_float4x4	{	GetLocalToViewTransform(viewportSize:viewportSize)	}
-	
-	public func GetLocalToViewTransform(viewportSize:CGSize) -> simd_float4x4
+	static public func CalculateLocalToViewTransform(viewportSize:CGSize,camera:PopCamera,orientation:UIInterfaceOrientation) -> simd_float4x4
 	{
-		return GetLocalToViewTransform(viewAspectRatio: Float(viewportSize.width / viewportSize.height) )
+		let rotateLeft = orientation == .portrait
+		let rotateRight = orientation == .portraitUpsideDown
+		
+		var viewAspectRatio = Float(viewportSize.width / viewportSize.height)
+		if rotateLeft || rotateRight
+		{
+			viewAspectRatio = 1.0 / viewAspectRatio
+		}
+		
+		let nearZ = camera.nearZ
+		let farZ = camera.farZ
+		let fovyRadians = Float(camera.fovVertical.radians)
+		let ys = 1 / tanf(fovyRadians * 0.5)
+		let xs = ys / viewAspectRatio
+		let zs = farZ / (nearZ - farZ)
+		
+		//	rotate left
+		if orientation == .portrait
+		{
+			return simd_float4x4(columns:(vector_float4( 0, -xs, 0,   0),
+										  vector_float4( ys, 0, 0,   0),
+										  vector_float4( 0,  0, zs, -1),
+										  vector_float4( 0,  0, zs * nearZ, 0)))
+		}
+		else if orientation == .portraitUpsideDown
+		{
+			return simd_float4x4(columns:(vector_float4( 0, xs, 0,   0),
+										  vector_float4( ys, 0, 0,   0),
+										  vector_float4( 0,  0, zs, -1),
+										  vector_float4( 0,  0, zs * nearZ, 0)))
+		}
+		else if orientation == .landscapeLeft
+		{
+			return simd_float4x4(columns:(vector_float4( -xs, 0, 0,   0),
+										  vector_float4( 0, -ys, 0,   0),
+										  vector_float4( 0,  0, zs, -1),
+										  vector_float4( 0,  0, zs * nearZ, 0)))
+		}
+
+		//	default (landscape right!)
+		let localToView = simd_float4x4(columns:(vector_float4(xs,  0, 0,   0),
+												 vector_float4( 0, ys, 0,   0),
+												 vector_float4( 0,  0, zs, -1),
+												 vector_float4( 0,  0, zs * nearZ, 0)))
+		return localToView
 	}
 	
-	public func GetLocalToViewTransform(viewAspectRatio:Float) -> simd_float4x4
+	open func GetLocalToViewTransform(viewportSize:CGSize,orientation:UIInterfaceOrientation) -> simd_float4x4
 	{
-		let projectionMatrix = matrix_perspective_right_hand(fovyRadians: Float(fovVertical.radians),
-															 aspectRatio: viewAspectRatio,
-															 nearZ: nearZ,
-															 farZ: farZ)
-		return projectionMatrix
+		//	default doesn't use orientation
+		return PopCamera.CalculateLocalToViewTransform(viewportSize: viewportSize, camera: self, orientation: .unknown)
 	}
 	
 	@MainActor
@@ -89,7 +130,7 @@ open class PopCamera : @preconcurrency PopActor
 		let worldToViewBufferIndex = 2
 		commandEncoder.setVertexBytes(&worldToView, length: MemoryLayout<simd_float4x4>.stride, index:worldToViewBufferIndex )
 		
-		var viewToLocal = self.GetLocalToViewTransform(viewportSize: debugProjectionViewportSize).inverse
+		var viewToLocal = self.GetLocalToViewTransform(viewportSize: debugProjectionViewportSize, orientation: .unknown).inverse
 		let viewToLocalBufferIndex = 3
 		commandEncoder.setVertexBytes(&viewToLocal, length: MemoryLayout<simd_float4x4>.stride, index:viewToLocalBufferIndex )
 		

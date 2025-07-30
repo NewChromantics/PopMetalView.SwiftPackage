@@ -199,7 +199,9 @@ public struct MetalSceneView : View, ContentRenderer
 	@MainActor
 	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
 	{
-		let renderCamera = PopRenderCamera(camera: self.camera, viewportPixelSize: size)
+		//let orientation = UIApplication.shared.statusBarOrientation
+		let orientation = metalView.window?.windowScene?.interfaceOrientation ?? UIInterfaceOrientation.unknown
+		let renderCamera = PopRenderCamera(camera: self.camera, viewportPixelSize: size, viewportOrientation: orientation)
 		
 		//	render each actor
 		for sceneActor in scene.actors
