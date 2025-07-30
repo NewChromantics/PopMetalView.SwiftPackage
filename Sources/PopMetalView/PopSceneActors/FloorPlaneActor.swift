@@ -4,12 +4,23 @@ import Foundation
 import SwiftUI	//	Angle
 
 
+public struct FloorPlaneParams
+{
+	var lineColour : simd_float4 = simd_float4(0,0.3,1,0.4)
+	var lineThickness : Float = 0.01
+	var lineSpacing : Float = 10.0
+	var discardMaxAlpha : Float = 0.9
+}
+
+
 open class FloorPlaneActor : @preconcurrency PopActor
 {
 	public var id = UUID() 
 	public var translation = simd_float3(0,0,0)
 	public var rotationPitch = Angle(degrees:0)
 	public var rotationYaw = Angle(degrees:0)
+	
+	@Published var params = FloorPlaneParams()
 	
 	var geometryPipeline : MTLRenderPipelineDescriptor?
 	
@@ -33,6 +44,12 @@ open class FloorPlaneActor : @preconcurrency PopActor
 		var worldToView = camera.worldToViewTransform
 		let worldToViewBufferIndex = 2
 		commandEncoder.setVertexBytes(&worldToView, length: MemoryLayout<simd_float4x4>.stride, index:worldToViewBufferIndex )
+
+		let vertBuffer_params = 0
+		let fragBuffer_params = 0
+		commandEncoder.setVertexBytes(&params, length: MemoryLayout<FloorPlaneParams>.stride, index:vertBuffer_params )
+		commandEncoder.setFragmentBytes(&params, length: MemoryLayout<FloorPlaneParams>.stride, index:fragBuffer_params )
+		
 		
 		commandEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4 )
 		
