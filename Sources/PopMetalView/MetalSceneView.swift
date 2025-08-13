@@ -189,6 +189,11 @@ public struct MetalSceneView : View, ContentRenderer
 	public func SetupView(metalView:MTKView)
 	{
 		metalView.depthStencilPixelFormat = MTLPixelFormat.depth32Float//_stencil8
+		
+		//	fixes warning in profiler https://stackoverflow.com/questions/76158347/change-storage-mode-of-mtkviews-depth-texture
+		//	defaults to private
+		metalView.depthStencilStorageMode = MTLStorageMode.memoryless
+
 		//metalView.colorPixelFormat = MTLPixelFormat.bgra8Unorm_srgb
 		metalView.colorPixelFormat = MTLPixelFormat.bgra8Unorm
 		metalView.clearDepth = 1.0
