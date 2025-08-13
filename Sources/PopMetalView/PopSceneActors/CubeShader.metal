@@ -123,10 +123,10 @@ fragment float4 CubeFragment(CubeVertexOut in [[stage_in]])
 float TimeAlongLine3(float3 Position,float3 Start,float3 End)
 {
 	float3 Direction = End - Start;
-	float DirectionLength = length(Direction);
-	if ( DirectionLength < 0.0001 )
+	float DirectionLengthSq = length_squared(Direction);
+	if ( DirectionLengthSq < 0.0001 )
 		return 0.0;
-	float Projection = dot( Position - Start, Direction) / (DirectionLength*DirectionLength);
+	float Projection = dot( Position - Start, Direction) / DirectionLengthSq;
 	
 	return Projection;
 }
