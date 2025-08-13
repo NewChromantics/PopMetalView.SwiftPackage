@@ -8,18 +8,72 @@ import Foundation
 import simd
 import SwiftUI	//	Angle
 import MetalKit
+import PopCommon
 
-//	polyfill orientation instead of making a proprietry orientation
-#if os(macOS)
-public enum UIInterfaceOrientation
+
+
+typealias simd_plane = simd_float4
+
+public extension simd_float4
 {
-	case unknown
-	case portrait
-	case portraitUpsideDown
-	case landscapeLeft
-	case landscapeRight
+	mutating func Normalise()
+	{
+		self = simd.normalize(self)
+	}
 }
-#endif
+
+public struct Frustum
+{
+	//	normalised planes for view space
+	var left = simd_plane()
+	var right = simd_plane()
+	var top = simd_plane()
+	var bottom = simd_plane()
+	var near = simd_plane()
+	var far = simd_plane()
+	
+	mutating func NormalisePlanes()
+	{
+		left.Normalise()
+		right.Normalise()
+		top.Normalise()
+		bottom.Normalise()
+		near.Normalise()
+		far.Normalise()
+	}
+
+	public func IsInside(center:simd_float3,radius:Float) -> Bool
+	{
+		//	now get distance from that plane - and see if it's inside
+		return true
+	}
+}
+
+
+extension PopRenderCamera
+{
+	//	from https://stackoverflow.com/a/34960913/355753
+	//	https://github.com/NewChromantics/PopEngineCommon/blob/73d9525a0d781046c9720b4b3f736178d82fcbe2/Math.js
+	public func GetFrustumPlanes(localToView:simd_float4x4) -> Frustum
+	{
+		let mat = localToView
+		var frustum = Frustum()
+		
+		//	fill each component
+		for i in 0..<4
+		{
+			frustum.left[i]		= mat[i,3] + mat[i,0]
+			frustum.right[i]	= mat[i,3] - mat[i,0]
+			frustum.bottom[i]	= mat[i,3] + mat[i,1]
+			frustum.top[i]		= mat[i,3] - mat[i,1]
+			frustum.near[i]		= mat[i,3] + mat[i,2]
+			frustum.far[i]		= mat[i,3] - mat[i,2]
+		}
+		
+		frustum.NormalisePlanes()
+		return frustum
+	}
+}
 
 public struct PopRenderCamera
 {
@@ -39,8 +93,14 @@ public struct PopRenderCamera
 		let worldToCamera = camera.localToWorldTransform.inverse
 		//	most cameras wont need to apply orientation
 		//	the ARKit camera does... but why? because the local to world is rotated? (I dont think so?)
-		let cameraToView = camera.GetLocalToViewTransform(viewportSize: viewportPixelSize, orientation: viewportOrientation)
+		let cameraToView = localToViewTransform
 		return cameraToView * worldToCamera
+	}
+
+	public var localToViewTransform : simd_float4x4
+	{
+		let cameraToView = camera.GetLocalToViewTransform(viewportSize: viewportPixelSize, orientation: viewportOrientation)
+		return cameraToView
 	}
 }
 
@@ -58,10 +118,18 @@ public protocol PopActor : ObservableObject, Identifiable
 	func Render(camera:PopRenderCamera,metalView:MTKView,commandEncoder:any MTLRenderCommandEncoder) throws
 }
 
+
 public extension PopActor
 {
 	var name : String	{	id.uuidString	}
 
+	//	this shouldnt be required, change the storage of translation in camera(or anything that overrides localToWorld!)
+	func GetPosition() -> simd_float3
+	{
+		let originWorld = localToWorldTransform * simd_float4(0,0,0,1)
+		return originWorld.xyz
+	}
+	
 	var localToWorldTransform : simd_float4x4	{	GetLocalToWorldTransform()	}
 	func GetLocalToWorldTransform() -> simd_float4x4	
 	{

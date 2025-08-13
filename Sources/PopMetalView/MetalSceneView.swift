@@ -3,6 +3,9 @@ import Metal
 import MetalKit
 import MouseTracking
 
+
+
+
 //	wrapper to interface with protocol
 public class AnyPopActor : PopActor
 {
@@ -37,10 +40,10 @@ public struct MetalSceneView : View, ContentRenderer
 	@State var draggingLastGestureFrom : CGSize? 
 	@State var rotationLastGestureFrom : Angle? 
 	
-	public init<SceneType:PopScene>(scene:Binding<SceneType>,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
+	public init<SceneType:PopScene>(scene:SceneType,camera:Binding<PopCamera>,showGizmosOnActors:[UUID])
 	{
 		//self._scene = Binding<any PopScene>( get: {scene.wrappedValue}, set:{_ in} )
-		self.scene = scene.wrappedValue
+		self.scene = scene
 		self.showGizmosOnActors = showGizmosOnActors
 		self._camera = camera
 	}
@@ -253,7 +256,7 @@ struct DummyScene : PopScene
 		},
 		set:	{_ in}//_ in 	useCamera1 ? scene.camera1 : scene.camera2	}
 	)
-	MetalSceneView(scene: $scene, camera:cameraBinding, showGizmosOnActors: scene.actors.map{$0.id})
+	MetalSceneView(scene: scene, camera:cameraBinding, showGizmosOnActors: scene.actors.map{$0.id})
 		.background(.blue)
 		.overlay
 	{
