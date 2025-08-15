@@ -250,7 +250,7 @@ struct DummyScene : PopScene
 {
 	@Previewable @State var scene = DummyScene()
 	@Previewable @State var useCamera1 = true
-	var cameraBinding = Binding<PopCamera>(
+	let cameraBinding = Binding<PopCamera>(
 		get:{
 			useCamera1 ? scene.camera1 : scene.camera2
 		},

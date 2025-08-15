@@ -6,7 +6,7 @@ import MetalKit
 
 
 
-open class PopCamera : @preconcurrency PopActor
+open class PopCamera : PopActor
 {
 	public var id = UUID()
 	@Published public var translation = simd_float3(0,1,3)

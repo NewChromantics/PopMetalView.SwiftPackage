@@ -4,7 +4,7 @@ import Foundation
 import SwiftUI	//	Angle
 
 
-open class QuadActor : @preconcurrency PopActor
+open class QuadActor : PopActor
 {
 	public var id = UUID() 
 	public var translation : simd_float3

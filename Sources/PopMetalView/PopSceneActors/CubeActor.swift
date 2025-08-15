@@ -3,7 +3,7 @@ import MetalKit
 import Foundation
 import SwiftUI	//	Angle
 
-open class CubeActor : @preconcurrency PopActor
+open class CubeActor : PopActor
 {
 	public var id = UUID() 
 	public var translation : simd_float3

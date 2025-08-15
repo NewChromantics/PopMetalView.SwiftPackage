@@ -8,19 +8,30 @@ import Foundation
 import simd
 import SwiftUI	//	Angle
 import MetalKit
-import PopCommon
 
 
 
 typealias simd_plane = simd_float4
 
+
+
+
 public extension simd_float4
 {
+	//	simd4.xyz swizzle
+	var xyz : simd_float3
+	{
+		return simd_float3(x,y,z)
+	}
+	
 	mutating func Normalise()
 	{
 		self = simd.normalize(self)
 	}
 }
+
+
+
 
 public struct Frustum
 {
@@ -115,7 +126,7 @@ public protocol PopActor : ObservableObject, Identifiable
 	var rotationYaw : Angle	{	get set	}
 	var localToWorldTransform : simd_float4x4	{	get	}
 	
-	func Render(camera:PopRenderCamera,metalView:MTKView,commandEncoder:any MTLRenderCommandEncoder) throws
+	@MainActor func Render(camera:PopRenderCamera,metalView:MTKView,commandEncoder:any MTLRenderCommandEncoder) throws
 }
 
 
