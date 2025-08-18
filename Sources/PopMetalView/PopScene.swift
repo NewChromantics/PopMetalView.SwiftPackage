@@ -187,6 +187,11 @@ public extension PopActor
 	
 	func enableDepthReadWrite(_ commandEncoder:(any MTLRenderCommandEncoder))
 	{
+		Self.enableDepthReadWrite(commandEncoder)
+	}
+	
+	static func enableDepthReadWrite(_ commandEncoder:(any MTLRenderCommandEncoder))
+	{
 		//	should cache this descriptor
 		let depthStateDescriptor = MTLDepthStencilDescriptor()
 		
