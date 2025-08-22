@@ -146,10 +146,12 @@ public struct MetalView : View
 	@State var lastError : Error?
 	var lastFps : String {	String(format:"%0.2f",self.frameCounter.lastAverageCountPerSec)	}
 	@StateObject var frameCounter = FrameCounter()
+	var showFps : Bool
 	
-	public init(contentRenderer: ContentRenderer)
+	public init(contentRenderer: ContentRenderer,showFps:Bool=true)
 	{
 		self.contentRenderer = contentRenderer
+		self.showFps = showFps
 	}
 	
 	public var body: some View 
@@ -159,10 +161,13 @@ public struct MetalView : View
 		{
 			VStack(alignment: .leading)
 			{
-				Text("\(lastFps) fps")
-					.padding(10)
-					.background(.black.opacity(0.70))
-					.foregroundStyle(.white.opacity(0.70))
+				if showFps
+				{
+					Text("\(lastFps) fps")
+						.padding(10)
+						.background(.black.opacity(0.70))
+						.foregroundStyle(.white.opacity(0.70))
+				}
 				
 				if let lastError
 				{
