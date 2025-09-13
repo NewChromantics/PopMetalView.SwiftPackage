@@ -144,7 +144,7 @@ public struct MetalSceneView : View, ContentRenderer
 		}
 	}
 	
-	func OnCameraMouseControl(_ mouseState:MouseState)
+	func OnCameraMouseControl(_ mouseState:MouseState) -> MouseTracking.MouseEventResponse
 	{
 		if mouseState.rightDown
 		{
@@ -157,10 +157,12 @@ public struct MetalSceneView : View, ContentRenderer
 			let moveScalarY = -0.01
 			camera.MoveRelative( Float(x*moveScalarX), Float(y*moveScalarY), 0 )
 			draggingRightMouseFrom = mouseState.position
+			return .EventHandled
 		}
-		else
+		else if draggingRightMouseFrom != nil
 		{
 			draggingRightMouseFrom = nil
+			return .EventHandled
 		}
 		
 		if mouseState.leftDown
@@ -175,17 +177,22 @@ public struct MetalSceneView : View, ContentRenderer
 			camera.rotationPitch += Angle(degrees:y*moveScalarY)
 			camera.rotationYaw += Angle(degrees:x*moveScalarX)
 			draggingLeftMouseFrom = mouseState.position
+			return .EventHandled
 		}
-		else
+		else if draggingLeftMouseFrom != nil
 		{
 			draggingLeftMouseFrom = nil
+			return .EventHandled
 		}
+
+		return .InheritedBehaviour
 	}
 	
-	func OnCameraMouseControl(_ scroll:MouseScrollEvent)
+	func OnCameraMouseControl(_ scroll:MouseScrollEvent) -> MouseTracking.MouseEventResponse
 	{
 		let zMove = scroll.scrollDelta * -0.5
 		camera.MoveRelative( 0, 0, Float(zMove) )
+		return .EventHandled
 	}
 	
 	@MainActor
