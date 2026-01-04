@@ -189,19 +189,19 @@ public struct MetalView : View
 }
 
 
-public struct MetalViewDirect : UIViewRepresentable 
+@MainActor public struct MetalViewDirect : UIViewRepresentable 
 {
 	var contentRenderer : ContentRenderer
 	var metalCore = MetalContentBase()
 	internal var onRenderFinished : (Error?)->Void
 	
-	public init(contentRenderer: ContentRenderer,onRenderFinished:@escaping ((Error?)->Void)=OnRenderFinishedNoop)
+	public init(contentRenderer: ContentRenderer,onRenderFinished:@escaping(Error?)->Void)
 	{
 		self.contentRenderer = contentRenderer
 		self.onRenderFinished = onRenderFinished
 	}
 
-	public static func OnRenderFinishedNoop(error:Error?)
+	@MainActor public static func OnRenderFinishedNoop(error:Error?)
 	{
 		if let error
 		{
