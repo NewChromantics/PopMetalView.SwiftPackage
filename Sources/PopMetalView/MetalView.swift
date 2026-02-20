@@ -135,28 +135,46 @@ func clamp(_ value:Float,_ Min:Float,_ Max:Float) -> Float
 }
 
 
+struct NoopMouseHandler : ViewMouseHandler
+{
+	func otherMouseDown(mousePosition: CGPoint, event: NSEvent) {
+		
+	}
+	
+	func otherMouseDrag(mousePosition: CGPoint, event: NSEvent) {
+		
+	}
+	
+	func otherMouseUp(mousePosition: CGPoint, event: NSEvent) {
+		
+	}
+	
+}
+
 /*
 	wrapper to MetalViewDirect with some niceities on top
 	- fps counter
 	- auto error display
 */
-public struct MetalView : View 
+public struct MetalView : View
 {
+	var mouseHandler : any ViewMouseHandler
 	var contentRenderer : ContentRenderer
 	@State var lastError : Error?
 	var lastFps : String {	String(format:"%0.2f",self.frameCounter.lastAverageCountPerSec)	}
 	@StateObject var frameCounter = FrameCounter()
 	var showFps : Bool
 	
-	public init(contentRenderer: ContentRenderer,showFps:Bool=true)
+	public init(contentRenderer: ContentRenderer,showFps:Bool=true,mouseHandler:(any ViewMouseHandler)?=nil)
 	{
 		self.contentRenderer = contentRenderer
 		self.showFps = showFps
+		self.mouseHandler = mouseHandler ?? NoopMouseHandler()
 	}
 	
 	public var body: some View 
 	{
-		MetalViewDirect(contentRenderer: self.contentRenderer,onRenderFinished: self.OnRenderFinished )
+		MetalViewDirect(contentRenderer: self.contentRenderer,onRenderFinished: self.OnRenderFinished, mouseHandler: mouseHandler )
 			.overlay
 		{
 			VStack(alignment: .leading)
@@ -188,6 +206,47 @@ public struct MetalView : View
 	}
 }
 
+@MainActor public protocol ViewMouseHandler
+{
+	func otherMouseDown(mousePosition:CGPoint,event:NSEvent)
+	func otherMouseDrag(mousePosition:CGPoint,event:NSEvent)
+	func otherMouseUp(mousePosition:CGPoint,event:NSEvent)
+}
+
+
+public class MTKViewWithMouseHandler : MTKView
+{
+	var mouseHandler : any ViewMouseHandler
+	
+	init(mouseHandler:any ViewMouseHandler)
+	{
+		self.mouseHandler = mouseHandler
+		super.init(frame:.zero,device:nil)
+	}
+	
+	required init(coder: NSCoder) 
+	{
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	public override func otherMouseDown(with event: NSEvent) 
+	{
+		let mousePosition = convert(event.locationInWindow, from: nil)
+		mouseHandler.otherMouseDown(mousePosition: mousePosition, event: event)
+	}
+	
+	public override func otherMouseDragged(with event: NSEvent) 
+	{
+		let mousePosition = convert(event.locationInWindow, from: nil)
+		mouseHandler.otherMouseDrag(mousePosition: mousePosition, event: event)
+	}
+	
+	public override func otherMouseUp(with event: NSEvent) 
+	{
+		let mousePosition = convert(event.locationInWindow, from: nil)
+		mouseHandler.otherMouseUp(mousePosition: mousePosition, event: event)
+	}
+}
 
 @MainActor public struct MetalViewDirect : UIViewRepresentable 
 {
@@ -195,10 +254,17 @@ public struct MetalView : View
 	var metalCore = MetalContentBase()
 	internal var onRenderFinished : (Error?)->Void
 	
-	public init(contentRenderer: ContentRenderer,onRenderFinished:@escaping(Error?)->Void)
+	//	access mouse events
+	var mouseHandler : any ViewMouseHandler
+	
+	public init(contentRenderer: ContentRenderer,
+				onRenderFinished:@escaping(Error?)->Void,
+				mouseHandler : any ViewMouseHandler
+	)
 	{
 		self.contentRenderer = contentRenderer
 		self.onRenderFinished = onRenderFinished
+		self.mouseHandler = mouseHandler
 	}
 
 	@MainActor public static func OnRenderFinishedNoop(error:Error?)
@@ -211,15 +277,15 @@ public struct MetalView : View
 	}
 	
 	
-	public typealias UIViewType = MTKView
-	public typealias NSViewType = MTKView
+	public typealias UIViewType = MTKViewWithMouseHandler
+	public typealias NSViewType = MTKViewWithMouseHandler
 	
 	public func makeNSView(context: Context) -> NSViewType 
 	{
 		return makeUIView(context: context)
 	}
 	
-	public func updateNSView(_ nsView: MTKView, context: Context) 
+	public func updateNSView(_ nsView: NSViewType, context: Context) 
 	{
 		updateUIView( nsView, context: context )
 	}
@@ -227,7 +293,7 @@ public struct MetalView : View
 	
 	public func makeUIView(context: Context) -> UIViewType 
 	{
-		let view = MTKView()
+		let view = UIViewType(mouseHandler: mouseHandler)
 		
 		view.device = MTLCreateSystemDefaultDevice()
 		view.delegate = context.coordinator
@@ -246,7 +312,8 @@ public struct MetalView : View
 		return view
 	}
 	
-	public func updateUIView(_ view: MTKView, context: Context) {
+	public func updateUIView(_ view: MTKView, context: Context) 
+	{
 		// Update the view
 	}
 	
@@ -472,9 +539,10 @@ class PreviewErrorRenderer : ContentRenderer
 	
 }
 
-
+/*
 #Preview
 {
+	
 	MetalView(contentRenderer: PreviewErrorRenderer())
 		.frame(minWidth:100,minHeight:100)
 	
@@ -482,3 +550,4 @@ class PreviewErrorRenderer : ContentRenderer
 		.frame(minWidth:100,minHeight:100)
 		.frame(maxWidth: .infinity,maxHeight: .infinity)
 }
+*/
