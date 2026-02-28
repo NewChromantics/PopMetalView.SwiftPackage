@@ -213,7 +213,7 @@ public struct MetalSceneView : View, ContentRenderer
 	}
 
 	@MainActor
-	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws 
+	public func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder, onWarning:@escaping(any Error)->Void) throws 
 	{
 		//let orientation = UIApplication.shared.statusBarOrientation
 		let orientation = metalView.window?.windowScene?.interfaceOrientation ?? UIInterfaceOrientation.unknown

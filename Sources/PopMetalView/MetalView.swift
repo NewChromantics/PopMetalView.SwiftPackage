@@ -34,7 +34,7 @@ public protocol ContentRenderer
 	func SetupView(metalView:MTKView)
 
 	@MainActor
-	func Draw(metalView:MTKView,size:CGSize,commandEncoder:any MTLRenderCommandEncoder) throws
+	func Draw(metalView:MTKView,size:CGSize,commandEncoder:any MTLRenderCommandEncoder,onWarning:@escaping(any Error)->Void) throws
 }
 
 
@@ -137,20 +137,29 @@ func clamp(_ value:Float,_ Min:Float,_ Max:Float) -> Float
 
 struct NoopMouseHandler : ViewMouseHandler
 {
-	func otherMouseDown(mousePosition: CGPoint, event: NSEvent) {
+	func OnMiddleMouseDown(mousePosition: CGPoint, event: NSEvent) {
 		
 	}
 	
-	func otherMouseDrag(mousePosition: CGPoint, event: NSEvent) {
+	func OnMiddleMouseDrag(mousePosition: CGPoint, event: NSEvent) {
 		
 	}
 	
-	func otherMouseUp(mousePosition: CGPoint, event: NSEvent) {
+	func OnMiddleMouseUp(mousePosition: CGPoint, event: NSEvent) {
 		
 	}
 	
+	func OnScrollWheel(delta: CGPoint, event: NSEvent) {
+		
+	}
 }
 
+
+struct IdentifiableError : Identifiable
+{
+	var id = UUID()
+	var error : any Error
+}
 /*
 	wrapper to MetalViewDirect with some niceities on top
 	- fps counter
@@ -160,7 +169,7 @@ public struct MetalView : View
 {
 	var mouseHandler : any ViewMouseHandler
 	var contentRenderer : ContentRenderer
-	@State var lastError : Error?
+	@State var lastRenderErrors : [IdentifiableError] = []
 	var lastFps : String {	String(format:"%0.2f",self.frameCounter.lastAverageCountPerSec)	}
 	@StateObject var frameCounter = FrameCounter()
 	var showFps : Bool
@@ -187,9 +196,10 @@ public struct MetalView : View
 						.foregroundStyle(.white.opacity(0.70))
 				}
 				
-				if let lastError
+				ForEach(lastRenderErrors)
 				{
-					Text("Error \(lastError.localizedDescription)")
+					error in
+					Text("Error \(error.error.localizedDescription)")
 						.padding(10)
 						.background(.red.opacity(0.70))
 						.foregroundStyle(.white.opacity(0.70))
@@ -199,18 +209,19 @@ public struct MetalView : View
 		}
 	}
 	
-	func OnRenderFinished(error:Error?)
+	func OnRenderFinished(errors:[Error])
 	{
-		self.lastError = error
+		self.lastRenderErrors = errors.map{ IdentifiableError(error: $0) }
 		self.frameCounter.Add()
 	}
 }
 
 @MainActor public protocol ViewMouseHandler
 {
-	func otherMouseDown(mousePosition:CGPoint,event:NSEvent)
-	func otherMouseDrag(mousePosition:CGPoint,event:NSEvent)
-	func otherMouseUp(mousePosition:CGPoint,event:NSEvent)
+	func OnMiddleMouseDown(mousePosition:CGPoint,event:NSEvent)
+	func OnMiddleMouseDrag(mousePosition:CGPoint,event:NSEvent)
+	func OnMiddleMouseUp(mousePosition:CGPoint,event:NSEvent)
+	func OnScrollWheel(delta:CGPoint,event:NSEvent)
 }
 
 
@@ -232,33 +243,41 @@ public class MTKViewWithMouseHandler : MTKView
 	public override func otherMouseDown(with event: NSEvent) 
 	{
 		let mousePosition = convert(event.locationInWindow, from: nil)
-		mouseHandler.otherMouseDown(mousePosition: mousePosition, event: event)
+		mouseHandler.OnMiddleMouseDown(mousePosition: mousePosition, event: event)
 	}
 	
 	public override func otherMouseDragged(with event: NSEvent) 
 	{
 		let mousePosition = convert(event.locationInWindow, from: nil)
-		mouseHandler.otherMouseDrag(mousePosition: mousePosition, event: event)
+		mouseHandler.OnMiddleMouseDrag(mousePosition: mousePosition, event: event)
 	}
 	
 	public override func otherMouseUp(with event: NSEvent) 
 	{
 		let mousePosition = convert(event.locationInWindow, from: nil)
-		mouseHandler.otherMouseUp(mousePosition: mousePosition, event: event)
+		mouseHandler.OnMiddleMouseUp(mousePosition: mousePosition, event: event)
 	}
+	
+#if canImport(AppKit)
+	public override func scrollWheel(with event:NSEvent)
+	{
+		let delta = CGPoint(x:event.scrollingDeltaX,y:event.scrollingDeltaY) 
+		mouseHandler.OnScrollWheel(delta: delta, event: event)
+	}
+#endif
 }
 
 @MainActor public struct MetalViewDirect : UIViewRepresentable 
 {
 	var contentRenderer : ContentRenderer
 	var metalCore = MetalContentBase()
-	internal var onRenderFinished : (Error?)->Void
+	internal var onRenderFinished : ([Error])->Void
 	
 	//	access mouse events
 	var mouseHandler : any ViewMouseHandler
 	
 	public init(contentRenderer: ContentRenderer,
-				onRenderFinished:@escaping(Error?)->Void,
+				onRenderFinished:@escaping([Error])->Void,
 				mouseHandler : any ViewMouseHandler
 	)
 	{
@@ -362,10 +381,15 @@ public class MTKViewWithMouseHandler : MTKView
 					throw MetalError("Failed to make command encoder")
 				}
 
+				var renderErrors : [any Error] = []
+				
 				//	if this throws, endEncoding() MUST still be called
 				do
 				{
 					try self.parent.contentRenderer.Draw(metalView: metalView, size: canvasBounds, commandEncoder: commandEncoder)
+					{
+						renderErrors.append($0)
+					}
 					commandEncoder.endEncoding()
 				}
 				catch
@@ -378,11 +402,11 @@ public class MTKViewWithMouseHandler : MTKView
 				commandBuffer.present(drawable)
 				commandBuffer.commit()
 				
-				parent.onRenderFinished(nil)
+				parent.onRenderFinished(renderErrors)
 			}
 			catch
 			{
-				parent.onRenderFinished(error)
+				parent.onRenderFinished([error])
 			}
 		}
 	}
@@ -503,7 +527,7 @@ fragment float4 fragment_main(VertexOut in [[stage_in]])
 	}
 	
 	@MainActor 
-	func Draw(metalView: MTKView, size: CGSize,commandEncoder:any MTLRenderCommandEncoder) throws 
+	func Draw(metalView: MTKView, size: CGSize,commandEncoder:any MTLRenderCommandEncoder,onWarning:@escaping(any Error)->Void) throws 
 	{
 		let quadPipeline = try MakeQuadPipeline(metalView: metalView)
 		
@@ -532,7 +556,7 @@ class PreviewErrorRenderer : ContentRenderer
 	{
 	}
 	
-	func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder) throws {
+	func Draw(metalView: MTKView, size: CGSize, commandEncoder: any MTLRenderCommandEncoder,onWarning:@escaping(any Error)->Void) throws {
 		throw MetalError("Preview Error")
 	}
 	
